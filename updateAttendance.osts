@@ -144,7 +144,9 @@ function main(workbook: ExcelScript.Workbook) {
     Object.entries(climbMap)
         .sort((a, b) => b[1] - a[1])
         .forEach(([name, climbs]) => {
-            newSecondTable.push([name, climbs]);
+            if (name && name.trim() !== "" && name !== "}" && name !== "0") {
+                newSecondTable.push([name, climbs]);
+            }
         });
 
     let secondTableRowCount = values.length - secondTableStart;
@@ -170,6 +172,9 @@ function main(workbook: ExcelScript.Workbook) {
         console.log("No names to update in the second table.");
         return;
     }
+
+    attendeesSheet.getRangeByIndexes(secondTableStart, 0, newSecondTable.length, newSecondTable[0].length).clear();
+
 
     // update secondtable
     let updatedTableRange = attendeesSheet.getRangeByIndexes(
