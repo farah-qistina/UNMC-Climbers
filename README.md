@@ -46,7 +46,7 @@ Now, both scripts should appear in the ribbon and can be run anytime directly fr
 
 ###  Sorting Process and Results
 **Scenario 1:** 20 or Fewer Signups
-- A new sheet **Attendees** is created
+- A new sheet **Attendees** sheet is created
 - No selection process is applied
 
 
