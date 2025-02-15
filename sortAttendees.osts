@@ -2,14 +2,12 @@ function main(workbook: ExcelScript.Workbook) {
     const maxMembers = 20; // Maximum total selected people
     const maxUnskilled = 10; // Maximum unskilled passengers
 
-    // Get the worksheet named "Sheet1"
     let sheet = workbook.getWorksheet("Sheet1");
     if (!sheet) {
         console.log("Sheet1 not found.");
         return;
     }
 
-    // Get the used range
     let usedRange = sheet.getUsedRange();
     if (!usedRange) {
         console.log("No data found in Sheet1.");
@@ -18,8 +16,8 @@ function main(workbook: ExcelScript.Workbook) {
 
     let values: (string | number | boolean)[][] = usedRange.getValues();
 
-    // Find the index of relevant columns
-    let headerRow = values[0] as string[]; // Assuming first row is the header
+    // column index
+    let headerRow = values[0] as string[];
     let idIndex = headerRow.indexOf("Id");
     let nameIndex = headerRow.indexOf("Name1");
     let skillIndex = headerRow.indexOf("Do you know how to belay and tie an 8-figure knot?");
@@ -31,7 +29,7 @@ function main(workbook: ExcelScript.Workbook) {
         return;
     }
 
-    // Find where the second table starts
+    // second table
     let secondTableStart = -1;
     for (let i = 0; i < values.length; i++) {
         if (values[i][0] === "Name" && values[i][1] === "No. of Climbs") {
@@ -45,24 +43,23 @@ function main(workbook: ExcelScript.Workbook) {
         return;
     }
 
-    // Extract climb data into a dictionary, ensuring names are properly formatted
+    // dictionary
     let climbDict: { [key: string]: number } = {};
     for (let i = secondTableStart; i < values.length; i++) {
         let climbName = values[i][0]?.toString().trim();
         let climbCount = parseInt(values[i][1]?.toString() || "0");
 
         if (climbName && !isNaN(climbCount)) {
-            let formattedClimbName = formatName(climbName); // Apply name formatting
+            let formattedClimbName = formatName(climbName);
             climbDict[formattedClimbName] = climbCount;
         }
     }
 
-    // Initialize categories
     let drivers: string[][] = [];
     let selfTransport: string[][] = [];
     let passengers: string[][] = [];
 
-    // Function to properly format names
+    // name formatting
     function formatName(name: string): string {
         return name
             .toLowerCase()
@@ -71,7 +68,6 @@ function main(workbook: ExcelScript.Workbook) {
             .join(" ");
     }
 
-    // Process each row (excluding header)
     for (let i = 1; i < secondTableStart - 2; i++) {
         let row = values[i];
         let id = row[idIndex]?.toString().trim();
@@ -80,7 +76,7 @@ function main(workbook: ExcelScript.Workbook) {
         let transport = row[transportIndex]?.toString().trim();
         let mamak = row[mamakIndex]?.toString().trim();
 
-        if (!id || !name) continue; // Skip empty IDs or names
+        if (!id || !name) continue;
 
         let formattedName = formatName(name);
         skill = skill.toLowerCase() === "yes" ? "Yes" : "No";
@@ -101,43 +97,42 @@ function main(workbook: ExcelScript.Workbook) {
     let totalPeople = passengers.length + drivers.length + selfTransport.length;
     let y = maxMembers - (drivers.length + selfTransport.length);
 
-    // If more than maxMembers, apply selection process
     let selectedPassengers: string[][] = [];
     let calculations: string[][] = [
         ["Passengers Sorted by Climbs:", "", "", "", "", "Passengers Sorted by Skill:", "", "", "", "", "Top " + maxUnskilled + ":", "", "", "", "", "Remaining Passengers Sorted by ID:", "", "", "", "", "All Passengers Sorted:", "", "", "", "", y + " Selected Passengers:"],
         ["ID", "Name", "Climbs", "Skill", "", "ID", "Name", "Climbs", "Skill", "", "ID", "Name", "Climbs", "Skill", "", "ID", "Name", "Climbs", "Skill", "", "ID", "Name", "Climbs", "Skill", "", "ID", "Name", "Climbs", "Skill"]
     ];
 
+    // more than maxMembers
     if (totalPeople > maxMembers) {
 
-        // Step 1: Sort passengers by climbs (ascending), then by ID (ascending)
+        // sort by climbs in ascending order
         let sortedByClimbs = passengers.sort((a, b) => {
-            let climbDiff = parseInt(a[2]) - parseInt(b[2]); // Ascending order
+            let climbDiff = parseInt(a[2]) - parseInt(b[2]);
             if (climbDiff !== 0) return climbDiff;
-            return parseInt(a[0]) - parseInt(b[0]); // Sort by ID if climbs are equal
+            return parseInt(a[0]) - parseInt(b[0]); // sort by ID if climbs are equal
         });
 
-        // Step 2: Sort by skill ("No" first), keeping climbs in ascending order
+        // sort by skill
         let sortedBySkill = [...sortedByClimbs].sort((a, b) => {
             if (a[3] === "No" && b[3] !== "No") return -1;
             if (a[3] !== "No" && b[3] === "No") return 1;
-            return parseInt(a[2]) - parseInt(b[2]); // Keep climbs in ascending order
+            return parseInt(a[2]) - parseInt(b[2]); // keep climbs in ascending order
         });
 
-        // Step 3: Select top `maxUnskilled` from `sortedBySkill`
+        // top maxUnskilled selection
         let topUnskilled = sortedBySkill.slice(0, maxUnskilled);
 
-        // Step 4: Remaining passengers sorted by ID
+        // sort by ID in ascending order
         let remainingPassengers = sortedBySkill.slice(maxUnskilled).sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
 
-        // Step 5: Merge `topUnskilled` and `remainingPassengers`
         let allSortedPassengers = [...topUnskilled, ...remainingPassengers];
 
-        // Step 6: Select the top `y` from `allSortedPassengers`
+        // select top y
         selectedPassengers = allSortedPassengers.slice(0, y);
         passengers = selectedPassengers;
 
-        // Ensure lists are side by side
+        // sorting display
         let maxRows = Math.max(sortedByClimbs.length, sortedBySkill.length, topUnskilled.length, remainingPassengers.length, allSortedPassengers.length, passengers.length);
         for (let i = 0; i < maxRows; i++) {
             calculations.push([
@@ -150,77 +145,67 @@ function main(workbook: ExcelScript.Workbook) {
             ]);
         }
 
-        let calcSheet = workbook.getWorksheet("Calculations") ?? workbook.addWorksheet("Calculations");
+        let calcSheet = workbook.getWorksheet("Sorting") ?? workbook.addWorksheet("Sorting");
         calcSheet.getUsedRange()?.clear();
-        // Ensure all rows in 'calculations' have the same number of columns
         let maxCols = Math.max(...calculations.map(row => row.length));
         calculations = calculations.map(row => [...row, ...Array(maxCols - row.length).fill("")]);
 
-        // Set calculations values
         let calcRange = calcSheet.getRangeByIndexes(0, 0, calculations.length, calculations[0].length);
         calcRange.setValues(calculations);
 
-        // Ensure all text and numbers are left-aligned
         calcRange.getFormat().setHorizontalAlignment("Left");
     }
 
-    // Ensure "Attendees" sheet exists, or create it
+    // Attendees
     let attendeesSheet = workbook.getWorksheet("Attendees") ?? workbook.addWorksheet("Attendees");
-    attendeesSheet.getUsedRange()?.clear(); // Clear previous contents
+    attendeesSheet.getUsedRange()?.clear();
 
-    // Define the first table (Main Attendee List) with "Cancelled" column added
+    // first table
     let attendeesTable: string[][] = [
-        ["Name", "Arrived", "Sent Out", "Cancelled"], // Updated header
+        ["Name", "Arrived", "Sent Out", "Cancelled"],
         ["Passengers", "", "", ""],
-        ...passengers.map(p => [p[1], "", "", ""]), // Adding empty column for "Cancelled"
+        ...passengers.map(p => [p[1], "", "", ""]),
         ["", "", "", ""], ["Drivers", "", "", ""],
-        ...drivers.map(p => [p[1], "", "", ""]), ["", "", "", ""], ["", "", "", ""], ["", "", "", ""],// Adding empty column for "Cancelled"
+        ...drivers.map(p => [p[1], "", "", ""]), ["", "", "", ""], ["", "", "", ""], ["", "", "", ""],
         ["", "", "", ""], ["Self-Transport", "", "", ""],
-        ...selfTransport.map(p => [p[1], "", "", ""]), // Adding empty column for "Cancelled"
+        ...selfTransport.map(p => [p[1], "", "", ""]),
         ["", "", "", ""], ["Committee", "", "", ""],
     ];
 
-    // Define the second table (Driver and Passenger) with a one-column gap
+    // second table
     let transportTable: string[][] = [
         ["Driver", "Passenger"],
     ];
 
-    // Set all columns in the "Attendees" sheet to a fixed width of 200px
-    let totalColumns = attendeesTable[0].length + transportTable[0].length + 1; // Includes both tables
+    let totalColumns = attendeesTable[0].length + transportTable[0].length + 1;
     for (let col = 0; col < totalColumns; col++) {
         attendeesSheet.getCell(0, col).getFormat().setColumnWidth(100);
     }
 
-    // Set values in the "Attendees" sheet
     attendeesSheet.getRangeByIndexes(0, 0, attendeesTable.length, attendeesTable[0].length).setValues(attendeesTable);
-    attendeesSheet.getRangeByIndexes(0, 5, transportTable.length, transportTable[0].length).setValues(transportTable); // Placing the second table 1 column to the right
+    attendeesSheet.getRangeByIndexes(0, 5, transportTable.length, transportTable[0].length).setValues(transportTable);
 
-    // Apply Bold Formatting to Specific Headers
     function applyBoldFormatting(range: ExcelScript.Range) {
         range.getFormat().getFont().setBold(true);
     }
 
-    // Apply Background Color to Differentiate Sections
     function applyBackgroundColor(range: ExcelScript.Range, color: string) {
         range.getFormat().getFill().setColor(color);
     }
 
-    // Define colors
-    let headerColor = "#FCE4D6"; // Light orange for headers
-    let passengerColor = "#FFF2CC"; // Light yellow for Passengers
-    let driverColor = "#E2EFDA"; // Light green for Drivers
-    let selfTransportColor = "#DDEBF7"; // Light blue for Self-Transport
-    let committeeColor = "#D9E1F2"; // Light purple for Committee
+    // colors
+    let headerColor = "#FCE4D6";
+    let passengerColor = "#FFF2CC";
+    let driverColor = "#E2EFDA";
+    let selfTransportColor = "#DDEBF7";
+    let committeeColor = "#D9E1F2";
 
-    // Apply bold formatting to headers
-    applyBoldFormatting(attendeesSheet.getRangeByIndexes(0, 0, 1, 4)); // "Name", "Arrived", "Sent Out", "Cancelled"
-    applyBoldFormatting(attendeesSheet.getRangeByIndexes(0, 5, 1, 2)); // "Driver", "Passenger"
+    applyBoldFormatting(attendeesSheet.getRangeByIndexes(0, 0, 1, 4));
+    applyBoldFormatting(attendeesSheet.getRangeByIndexes(0, 5, 1, 2));
 
-    // Apply background color to headers
-    applyBackgroundColor(attendeesSheet.getRangeByIndexes(0, 0, 1, 4), headerColor); // "Name", "Arrived", "Sent Out", "Cancelled"
-    applyBackgroundColor(attendeesSheet.getRangeByIndexes(0, 5, 1, 2), headerColor); // "Driver", "Passenger"
+    applyBackgroundColor(attendeesSheet.getRangeByIndexes(0, 0, 1, 4), headerColor);
+    applyBackgroundColor(attendeesSheet.getRangeByIndexes(0, 5, 1, 2), headerColor);
 
-    // Apply bold formatting and colors to section titles
     let titleRows = {
         passengers: 1,
         drivers: passengers.length + 3,
@@ -228,7 +213,6 @@ function main(workbook: ExcelScript.Workbook) {
         committee: passengers.length + drivers.length + selfTransport.length + 10
     };
 
-    // Apply colors to section titles
     applyBoldFormatting(attendeesSheet.getRangeByIndexes(titleRows.passengers, 0, 1, 4));
     applyBoldFormatting(attendeesSheet.getRangeByIndexes(titleRows.drivers, 0, 1, 4));
     applyBoldFormatting(attendeesSheet.getRangeByIndexes(titleRows.selfTransport, 0, 1, 4));

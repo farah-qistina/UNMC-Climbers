@@ -1,13 +1,18 @@
 function main(workbook: ExcelScript.Workbook) {
-    // Get the "Attendees" sheet
-    let sheet = workbook.getWorksheet("Attendees");
-    if (!sheet) {
+    // Attendees for first table
+    let attendeesSheet = workbook.getWorksheet("Attendees");
+    if (!attendeesSheet) {
         console.log("Attendees sheet not found.");
         return;
     }
 
-    // Get the used range
-    let usedRange = sheet.getUsedRange();
+    let climbMap: { [key: string]: number } = {};
+    let sentOutList: string[] = [];
+
+    climbMap = {};
+    sentOutList = [];
+
+    let usedRange = attendeesSheet.getUsedRange();
     if (!usedRange) {
         console.log("No data found in Attendees sheet.");
         return;
@@ -15,7 +20,56 @@ function main(workbook: ExcelScript.Workbook) {
 
     let values: (string | number | boolean)[][] = usedRange.getValues();
 
-    // Function to properly format names
+    // remove existing second table if present
+    let existingSecondTableStart = -1;
+    for (let i = 0; i < values.length; i++) {
+        if (values[i][0] === "Name" && existingSecondTableStart === -1) { 
+            existingSecondTableStart = i;
+        } else if (values[i][0] === "Name") { 
+            let lastRow = i + 1;
+            while (lastRow < values.length && values[lastRow][0]) {
+                lastRow++;
+            }
+
+            let clearRange = attendeesSheet.getRangeByIndexes(i, 0, lastRow - i, 2);
+            clearRange.clear();
+
+            values = values.slice(0, i);
+            break;
+        }
+    }
+
+
+    // Sheet1 for second table
+    let secondSheet = workbook.getWorksheet("Sheet1");
+    if (!secondSheet) {
+        console.log("Sheet1 not found.");
+        return;
+    }
+    let secondUsedRange = secondSheet.getUsedRange();
+    if (!secondUsedRange) {
+        console.log("No data found in Sheet1.");
+        return;
+    }
+    let secondValues: (string | number | boolean)[][] = secondUsedRange.getValues();
+
+    let secondTableHeaderRow = -1;
+    for (let i = 0; i < secondValues.length; i++) {
+        if (secondValues[i][0] === "Name") {
+            secondTableHeaderRow = i;
+            break;
+        }
+    }
+    if (secondTableHeaderRow === -1) {
+        console.log("Could not locate the second table (header 'Name') in Sheet1.");
+        return;
+    }
+
+    for (let i = secondTableHeaderRow; i < secondValues.length; i++) {
+        values.push(secondValues[i]);
+    }
+
+    // format name
     function formatName(name: string): string {
         return name
             .toLowerCase()
@@ -24,16 +78,15 @@ function main(workbook: ExcelScript.Workbook) {
             .join(" ");
     }
 
-    // Find the two tables
     let firstTableStart = -1;
     let secondTableStart = -1;
 
     for (let i = 0; i < values.length; i++) {
         if (values[i][0] === "Name") {
             if (firstTableStart === -1) {
-                firstTableStart = i + 1; // First table starts below "Name" header
+                firstTableStart = i + 1;
             } else {
-                secondTableStart = i + 1; // Second table starts below the second "Name" header
+                secondTableStart = i + 2;
                 break;
             }
         }
@@ -44,34 +97,29 @@ function main(workbook: ExcelScript.Workbook) {
         return;
     }
 
-    // Process names in both tables to be formatted correctly
     for (let i = firstTableStart; i < secondTableStart - 1; i++) {
         if (values[i][0] && typeof values[i][0] === "string") {
-            values[i][0] = formatName(values[i][0]);
+            values[i][0] = formatName(values[i][0] as string);
         }
     }
     for (let i = secondTableStart; i < values.length; i++) {
         if (values[i][0] && typeof values[i][0] === "string") {
-            values[i][0] = formatName(values[i][0]);
+            values[i][0] = formatName(values[i][0] as string);
         }
     }
 
-    // Collect names where "Sent Out" is checked (TRUE)
-    let sentOutList: string[] = [];
+    // names where Sent-Out is checked
     const excludedHeaders = ["Committee", "Passengers", "Drivers", "Self-Transport"];
 
     for (let i = firstTableStart; i < secondTableStart - 1; i++) {
         let name = values[i][0] as string;
-        let sentOut = values[i][2]; // Column index 2 is "Sent Out"
+        let sentOut = values[i][2];
 
         if (sentOut === true && name && name.trim() !== "" && !excludedHeaders.includes(name.trim())) {
             sentOutList.push(name);
         }
     }
 
-
-    // Process the second table and update climb count
-    let climbMap: { [key: string]: number } = {}; // Store names with climb counts
     for (let i = secondTableStart; i < values.length; i++) {
         let name = values[i][0] as string;
         let climbCount = parseInt(values[i][1]?.toString() || "0");
@@ -80,50 +128,64 @@ function main(workbook: ExcelScript.Workbook) {
         }
     }
 
-    // Update climb counts based on sent out list
+    // update climb count
     sentOutList.forEach(name => {
         if (climbMap.hasOwnProperty(name)) {
-            climbMap[name] += 1; // Increase existing count
+            climbMap[name] += 1;
         } else {
-            climbMap[name] = 1; // New entry
+            climbMap[name] = 1;
         }
     });
 
-    // Create the new second table with updated climb counts
+    // create new second table
     let newSecondTable: (string | number)[][] = [["Name", "No. of Climbs"]];
 
-    // Convert climbMap into an array and sort by climbs in descending order
+    // sort no. of climbs in descending order
     Object.entries(climbMap)
-        .sort((a, b) => b[1] - a[1]) // Sort by No. of Climbs (Descending)
+        .sort((a, b) => b[1] - a[1])
         .forEach(([name, climbs]) => {
             newSecondTable.push([name, climbs]);
         });
 
-    // Calculate the number of rows currently in the second table (excluding headers)
     let secondTableRowCount = values.length - secondTableStart;
 
-    // If there are no names in the second table, set row count to 0
     if (secondTableRowCount <= 0) {
         secondTableRowCount = 0;
     }
 
-    // Only clear if the second table is not empty
     if (secondTableRowCount > 0) {
-        let secondTableRange = sheet.getRangeByIndexes(secondTableStart - 1, 0, secondTableRowCount, 2);
-        secondTableRange.clear();
+    let secondTableRange = attendeesSheet.getRangeByIndexes(
+        secondTableStart - 1,
+        0,
+        secondTableRowCount + 1,
+        2
+    );
+    secondTableRange.clear();
     }
 
-    // If there are no names to update, stop execution here
+    secondTableStart = secondTableStart - 1;
+
+
     if (Object.keys(climbMap).length === 0) {
         console.log("No names to update in the second table.");
         return;
     }
 
-    // Update the second table in the "Attendees" sheet with the new values
-    let updatedTableRange = sheet.getRangeByIndexes(secondTableStart - 1, 0, newSecondTable.length, newSecondTable[0].length);
+    // update secondtable
+    let updatedTableRange = attendeesSheet.getRangeByIndexes(
+        secondTableStart,
+        0,
+        newSecondTable.length,
+        newSecondTable[0].length
+    );
     updatedTableRange.setValues(newSecondTable);
 
-    let headerRange = sheet.getRangeByIndexes(secondTableStart - 1, 0, 1, 2); // Select "Name" and "No. of Climbs"
+    let headerRange = attendeesSheet.getRangeByIndexes(
+        secondTableStart,
+        0,
+        1,
+        2
+    );
     headerRange.getFormat().getFont().setBold(true);
     headerRange.getFormat().getFill().setColor("#D6DCE4");
 }
