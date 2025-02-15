@@ -21,7 +21,7 @@ Office Scripts for the UNM Rock Climbing Club to select members, create sheets, 
    - Rename the script to **Update Attendance**.
    - Save the script.
 
-Now, both scripts will appear in the ribbon and can be run anytime directly from Excel.
+Now, both scripts should appear in the ribbon and can be run anytime directly from Excel.
 
 ![Automate Ribbon](assets/automate-ribbon.png)
 
@@ -72,4 +72,4 @@ These variables are at the very top of the script for ease of access and can be 
 2) Check the new table for multiple names referring to the same person and update accordingly.
 
 <br><br>
-**All done!** Future committee members can make changes to improve the scripts, contact me to be added as a collaborator😊
+**All done!** Future committee members can make changes to improve the scripts, contact me to be added as a collaborator.😊
