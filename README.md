@@ -53,11 +53,12 @@ Now, both scripts should appear in the ribbon and can be run anytime directly fr
 **Scenario 2:** More than 20 Signups
 - 2 new sheets **Attendees** and **Sorting** are created
 - The **Sorting** sheet displays the selection process using the following criteria:
-   1) **Passengers** are sorted from least to most climbs.
-   2) Further sorted by **skill**, prioritizing those who have never been taught to belay and tie a figure-eight knot.
-   3) The first 10 are selected as a priority.
-   4) The remaining spots are filled on a **first-come, first-served basis**.
-   5) **Drivers and self-transport members are automatically included**, so the final passenger count follows:  
+  
+   1. **Passengers** are sorted from least to most climbs.
+   2. Further sorted by **skill**, prioritizing those who have never been taught to belay and tie a figure-eight knot.
+   3. The first 10 are selected as a priority.
+   4. The remaining spots are filled on a **first-come, first-served basis**.
+   5. **Drivers and self-transport members are automatically included**, so the final passenger count follows:  
        `maxMembers - (number of drivers + number of self-transport members)`
 
 ### Adjusting Code Values
