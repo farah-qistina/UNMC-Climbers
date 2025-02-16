@@ -1,5 +1,5 @@
 # 🧗UNMC-Climbers
-Office Scripts for the UNM Rock Climbing Club to select members, create sheets, and update attendance for our weekly indoor climbs.
+Office Scripts for the UNM Rock Climbing Club to manage member selection, sheet creation, and attendance tracking for weekly indoor climbs, prioritizing passengers who are new to climbing and have yet to learn essential skills.
 
 ## ⚙️ Setting Up
 
@@ -21,7 +21,7 @@ Office Scripts for the UNM Rock Climbing Club to select members, create sheets, 
    - Rename the script to **Update Attendance**.
    - Save the script.
 
-Now, both scripts should appear in the ribbon and can be run anytime directly from Excel.
+Now, both scripts should appear in the ribbon and can be run directly from Excel at any time.
 
 ![Automate Ribbon](assets/automate-ribbon.png)
 
@@ -35,7 +35,7 @@ Now, both scripts should appear in the ribbon and can be run anytime directly fr
    - If it's the first climb, add headers **Name** and **No. of Climbers**
 
      ![Attendance Table Headers](assets/attendance_headers.png)
-   - Otherwise, it should resemble this:  
+   - Otherwise, it should resemble this:
      
      ![Attendance Table Example](assets/attendance_table.png)
 
@@ -62,10 +62,10 @@ Now, both scripts should appear in the ribbon and can be run anytime directly fr
        `maxMembers - (number of drivers + number of self-transport members)`
 
 ### Adjusting Code Values
-`maxMembers` defines the maximum number of members that can be accomodated (Default 20)<br>
-`maxUnskilled` defines how many members who don't know how to belay or tie a figure-eight knot can be accomodated for training (Default 10) <br>
+`maxMembers` defines the maximum number of members that can be accommodated (Default 20)<br>
+`maxUnskilled` defines how many members who don't know how to belay or tie a figure-eight knot can be accommodated for training (Default 10) <br>
 <br>
-These variables are at the very top of the script for ease of access and can be modified.
+These variables can be modified and are at the very top of the script for ease of access.
 
 ## 📈 Update Attendance
 1) **Run the script**
@@ -73,4 +73,4 @@ These variables are at the very top of the script for ease of access and can be 
 2) Check the new table for multiple names referring to the same person and update accordingly.
 
 <br><br>
-**All done!** Future committee members can make changes to improve the scripts, contact me to be added as a collaborator. 😊
+**All done!** Future committee members can make changes to improve the scripts, just contact me to be added as a collaborator. 😊
