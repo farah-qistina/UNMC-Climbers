@@ -19,7 +19,7 @@ function main(workbook: ExcelScript.Workbook) {
     // column index
     let headerRow = values[0] as string[];
     let idIndex = headerRow.indexOf("Id");
-    let nameIndex = headerRow.indexOf("Name1");
+    let nameIndex = headerRow.indexOf("Name");
     let skillIndex = headerRow.indexOf("Do you know how to belay and tie an 8-figure knot?");
     let transportIndex = headerRow.indexOf("Means of Transportation");
     let mamakIndex = headerRow.indexOf("Will you be joining us for the post-climb mamak session?");
